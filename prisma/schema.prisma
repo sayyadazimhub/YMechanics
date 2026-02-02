@@ -1,0 +1,86 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mongodb"
+  url      = env("DATABASE_URL")
+}
+
+enum roles {
+  CUSTOMER
+  MECHANIC
+  ADMIN
+}
+
+model users {
+  id        String    @id @default(auto()) @map("_id") @db.ObjectId
+  name      String
+  username  String    @unique
+  password  String
+  role      roles
+  is_active Boolean   @default(true)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime? @default(now())
+
+  @@map("users")
+}
+
+model states {
+  id        String     @id @default(auto()) @map("_id") @db.ObjectId
+  code      String?    @unique
+  name      String
+  cities    cities[]   @relation("StateCities")
+  mechanics mechanic[] @relation("StateMechanics")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("states")
+}
+
+model cities {
+  id   String @id @default(auto()) @map("_id") @db.ObjectId
+  name String
+
+  state_id String @db.ObjectId
+  state    states @relation("StateCities", fields: [state_id], references: [id])
+
+  mechanics mechanic[] @relation("CityMechanics")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("cities")
+}
+
+model mechanic {
+  id       String @id @default(auto()) @map("_id") @db.ObjectId
+  name     String
+  username String @unique
+  password String
+
+  phone   String @unique
+  address String
+
+  latitude  Float
+  longitude Float
+
+  state_id String @db.ObjectId
+  state    states @relation("StateMechanics", fields: [state_id], references: [id])
+
+  city_id String @db.ObjectId
+  city    cities @relation("CityMechanics", fields: [city_id], references: [id])
+
+  role      roles
+  is_active Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("mechanic")
+}
