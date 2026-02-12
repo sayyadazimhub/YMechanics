@@ -1,6 +1,25 @@
+'use client';
+
+import { useEffect } from 'react';
 import { Menubar } from 'primereact/menubar';
+import { Button } from 'primereact/button';
+import { useRouter } from 'next/navigation';
 
 const PageLayout = ({ children }) => {
+    const router = useRouter();
+
+    useEffect(() => {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            router.push('/');
+        }
+    }, [router]);
+
+    const handleLogout = () => {
+        localStorage.removeItem('token');
+        router.push('/');
+    };
+
     const items = [
         {
             label: 'Home',
@@ -75,9 +94,19 @@ const PageLayout = ({ children }) => {
             icon: 'pi pi-envelope'
         }
     ];
+
+    const end = (
+        <Button
+            label="Logout"
+            icon="pi pi-power-off"
+            className="p-button-danger p-button-text"
+            onClick={handleLogout}
+        />
+    );
+
     return (
         <div className="page-layout">
-            <Menubar model={items} />
+            <Menubar model={items} end={end} />
 
             {children}
         </div>

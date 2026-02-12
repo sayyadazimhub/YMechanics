@@ -1,76 +1,135 @@
-import { addUser, getAllUsers, getUserByUsername, getUserById, updateUserDal, updatePasswordDal } from "../dal/users_dal";
-import bcrypt from 'bcryptjs';
+import {
+    addUser,
+    getAllUsers,
+    getUserById,
+    updateUserDal,
+    getUserByUsername
+} from "../dal/users_dal";
 
-export const addUserService = async (userData) => {
-    try {
-        const user = await getUserByUsername(userData.username);
-        console.log("Existing user:", user);
-        if (user) {
-            return { message: "Username already exists", statusCode: "202" };
-        }
-        // Allow all valid roles: CUSTOMER, MECHANIC, ADMIN
-        const validRoles = ['CUSTOMER', 'MECHANIC', 'ADMIN'];
-        if (!validRoles.includes(userData.role)) {
-            return { message: "Invalid role. Must be CUSTOMER, MECHANIC, or ADMIN", statusCode: "203" };
-        }
-        const { password } = userData;
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(password, salt);
-        userData.password = hashedPassword;
 
-        const newUser = await addUser(userData);
-        return { message: "User added successfully", statusCode: "201", data: newUser };
-    } catch (error) {
-        return { message: error.message, statusCode: "500" };
+import bcrypt from "bcryptjs";
+import { signToken } from "@/lib/jwt";
+
+/* ---------------- ADD USER ---------------- */
+export const addUserService = async (data) => {
+
+    const exist = await getUserByUsername(data.username);
+
+    if (exist) {
+        return { statusCode: "409", message: "Username already exists" };
     }
+
+    const hash = await bcrypt.hash(data.password, 10);
+
+    data.password = hash;
+
+    const user = await addUser(data);
+
+    return {
+        statusCode: "201",
+        message: "User created",
+        data: user
+    };
 };
 
-export const getAllUsersService = async () => {
-    try {
-        const users = await getAllUsers();
-        return { message: "Users retrieved successfully", statusCode: "200", data: users };
-    } catch (error) {
-        return { message: error.message, statusCode: "500" };
+
+/* ---------------- LOGIN ---------------- */
+export const loginService = async (data) => {
+
+    const user = await getUserByUsername(data.username);
+
+    if (!user) {
+        return { statusCode: "404", message: "User not found" };
     }
+
+    const valid = await bcrypt.compare(data.password, user.password);
+
+    if (!valid) {
+        return { statusCode: "401", message: "Invalid password" };
+    }
+
+    const token = await signToken({
+        id: user.id,
+        role: user.role
+    });
+
+    return {
+        statusCode: "200",
+        message: "Login success",
+        token,
+        user
+    };
 };
 
 
-export const getUsersService = async (skip, take) => {
-    try {
-        const users = await getAllUsers(skip ? skip : 0, take ? take : 10);
-        return { message: "Users fetched successfully", statusCode: "200", data: users };
-    } catch (error) {
-        return { message: error.message, statusCode: "500" };
-    }
+/* ---------------- GET USERS ---------------- */
+export const getUsersService = async (skip = 0, take = 10) => {
+
+    const users = await getAllUsers(skip, take);
+
+    return {
+        statusCode: "200",
+        message: "Users fetched",
+        data: users
+    };
 };
 
-export const updateUserService = async (userId, userData) => {
-    try {
-        const user = await getUserById(userId);
-        if (!user) {
-            return { message: "User not found", statusCode: "404" };
-        }
-        const updatedUser = await updateUserDal(userId, userData);
-        return { message: "User updated successfully", statusCode: "200", data: updatedUser };
-    } catch (error) {
-        return { message: error.message, statusCode: "500" };
+
+/* ---------------- UPDATE USER ---------------- */
+export const updateUserService = async (id, data) => {
+
+    const user = await getUserById(id);
+
+    if (!user) {
+        return {
+            statusCode: "404",
+            message: "User not found"
+        };
     }
-}
 
-export const updatePasswordService = async (userId, newPassword) => {
-    try {
-        const user = await getUserById(userId);
-        if (!user) {
-            return { message: "User not found", statusCode: "404" };
-        }
+    const updated = await updateUserDal(id, {
+        name: data.name,
+        is_active: data.is_active
+    });
 
-        // Hash the new password
-        const salt = await bcrypt.genSalt(10);
-        const hashedPassword = await bcrypt.hash(newPassword, salt);
+    return {
+        statusCode: "200",
+        message: "User updated",
+        data: updated
+    };
+};
 
-        const updatedUser = await updatePasswordDal(userId, hashedPassword);
-        return { message: "Password updated successfully", statusCode: "200", data: updatedUser };
-    } catch (error) {
-        return { message: error.message, statusCode: "500" };
+
+export const updateUserOtpDal = async (username, otp) => {
+  try {
+
+    // ✅ Find user by email/username
+    const user = await prisma.users.findUnique({
+      where: {
+        username: username
+      }
+    });
+
+    if (!user) {
+      throw new Error("User not found");
     }
-}
+
+    // ❌ Already verified
+    if (user.isVerified) {
+      throw new Error("User already verified");
+    }
+
+    // ❌ OTP expired
+    if (!user.otpExpiresAt || user.otpExpiresAt < new Date()) {
+      throw new Error("OTP expired");
+    }
+
+    // ❌ OTP mismatch
+    if (user.otp !== otp) {
+      throw new Error("Invalid OTP");
+    }
+  } catch (error) {
+    console.error("OTP Update Error:", error);
+    throw error;
+  }
+};

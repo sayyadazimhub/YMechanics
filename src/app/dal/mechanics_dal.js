@@ -1,6 +1,4 @@
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from "@/lib/prisma";
 
 export const addMechanicDal = async (mechanicData) => {
     return await prisma.mechanic.create({
@@ -62,3 +60,110 @@ export const seedLocationsDal = async (data) => {
     }
 };
 
+export const activateMechanicDal = async (mechanicId) => {
+    return await prisma.mechanic.update({
+        where: { id: mechanicId },
+        data: {
+            is_active: true,
+            otp: null,
+            otpExpiresAt: null
+        }
+    });
+};
+
+export const updateMechanicOtpDal = async (mechanicId, otp, expiresAt) => {
+    return await prisma.mechanic.update({
+        where: { id: mechanicId },
+        data: {
+            otp,
+            otpExpiresAt: expiresAt
+        }
+    });
+};
+
+
+
+
+// export const saveResetTokenDal = async (id, token, expiry) => {
+//   return prisma.mechanic.update({
+//     where: { id },
+//     data: {
+//       reset_token: token,
+//       reset_expiry: expiry
+//     }
+//   });
+// };
+
+// export const getByResetTokenDal = async (token) => {
+//   return prisma.mechanic.findFirst({
+//     where: {
+//       reset_token: token,
+//       reset_expiry: { gt: new Date() }
+//     }
+//   });
+// };
+
+// export const updatePasswordDal = async (id, password) => {
+//   return prisma.mechanic.update({
+//     where: { id },
+//     data: {
+//       password,
+//       reset_token: null,
+//       reset_expiry: null
+//     }
+//   });
+// };
+export const getMechanicByEmailDal = async (username) => {
+    return prisma.mechanic.findUnique({
+        where: { username }
+    });
+};
+
+
+export const saveResetOtpDal = async (id, otp, expiry) => {
+
+    return await prisma.mechanic.update({
+
+        where: { id },
+
+        data: {
+            otp,
+            otpExpiresAt: expiry,
+        },
+
+    });
+
+};
+
+export const getMechanicByOtpDal = async (otp) => {
+
+    return await prisma.mechanic.findFirst({
+
+        where: {
+
+            otp,
+
+            otpExpiresAt: {
+                gt: new Date(), // still valid
+            },
+
+        },
+
+    });
+
+};
+
+export const clearOtpDal = async (id) => {
+
+    return await prisma.mechanic.update({
+
+        where: { id },
+
+        data: {
+            otp: null,
+            otpExpiresAt: null,
+        },
+
+    });
+
+};

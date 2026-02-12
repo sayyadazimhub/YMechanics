@@ -48,8 +48,8 @@ model cities {
   id   String @id @default(auto()) @map("_id") @db.ObjectId
   name String
 
-  state_id String @db.ObjectId
-  state    states @relation("StateCities", fields: [state_id], references: [id])
+  state_id String  @db.ObjectId
+  state    states? @relation("StateCities", fields: [state_id], references: [id])
 
   mechanics mechanic[] @relation("CityMechanics")
   createdAt DateTime   @default(now())
@@ -64,8 +64,9 @@ model mechanic {
   username String @unique
   password String
 
-  phone   String @unique
-  address String
+  phone    String @unique
+  address  String
+  distance Int
 
   latitude  Float
   longitude Float
@@ -77,7 +78,13 @@ model mechanic {
   city    cities @relation("CityMechanics", fields: [city_id], references: [id])
 
   role      roles
-  is_active Boolean @default(true)
+  is_active Boolean @default(false)
+
+  otp          String?
+  otpExpiresAt DateTime?
+
+  documentUrl      String?
+  documentFileName String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

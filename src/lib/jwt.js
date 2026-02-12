@@ -1,34 +1,47 @@
-import jwt from 'jose';
+import { SignJWT, jwtVerify } from 'jose';
 
-const SECRET_KEY = process.env.JWT_SECRET || 'your_secret_key';
+const SECRET = process.env.JWT_SECRET || 'default-secret-key-change-me';
+const secretKey = new TextEncoder().encode(SECRET);
 
-export const generateToken = async (payload, expiresIn = '1d') => {
-    const alg = 'HS256';
-    const secret = new TextEncoder().encode(SECRET_KEY);
-    const token = await new jwt.SignJWT(payload)
-        .setProtectedHeader({ alg })
-        .setExpirationTime(expiresIn)
-        .sign(secret);
-    return token;
-}
+// Generate Token
+export const signToken = async (payload) => {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1d')
+    .sign(secretKey);
+};
+
+// Verify Token
 export const verifyToken = async (token) => {
-    try {
-        const secret = new TextEncoder().encode(SECRET_KEY);
-        const { payload } = await jwt.jwtVerify(token, secret);
-        return payload;
-    } catch (error) {
-        throw new Error('Invalid token');
-    }
-}
+  try {
+    const { payload } = await jwtVerify(token, secretKey);
+    return payload;
+  } catch {
+    return null;
+  }
+};
 
-export const decodeToken = (token) => {
-    try {
-        const decoded = jwt.decodeJwt(token);
-        return decoded;
-    } catch (error) {
-        throw new Error('Invalid token');
-    }
-}
+// import jwt from "jsonwebtoken";
+
+// const SECRET = process.env.JWT_SECRET || "mysecretkey";
 
 
+// /* Generate JWT */
+// export const signToken = (payload) => {
 
+//     return jwt.sign(payload, SECRET, {
+//         expiresIn: "1d"
+//     });
+// };
+
+
+// /* Verify JWT */
+// export const verifyToken = (token) => {
+
+//     try {
+//         return jwt.verify(token, SECRET);
+//     } catch (err) {
+//         return null;
+//     }
+// };

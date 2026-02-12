@@ -1,55 +1,56 @@
-// import { PrismaClient } from '../../../generated/prisma';
 import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-export const addUser = async (userData) => {
-    const newUser = await prisma.users.create({
-        data: userData
+
+/* -------- CREATE USER -------- */
+export const addUser = async (data) => {
+
+    return await prisma.users.create({
+        data
     });
-    return newUser;
 };
 
-export const getAllUsers = async (skip, take) => {
-    const users = await prisma.users.findMany({
+
+/* -------- GET USERS -------- */
+export const getAllUsers = async (skip = 0, take = 10) => {
+
+    return await prisma.users.findMany({
         skip,
-        take
+        take,
+        orderBy: {
+            createdAt: 'desc'
+        }
     });
-    return users;
 };
 
+
+/* -------- GET BY USERNAME -------- */
 export const getUserByUsername = async (username) => {
-    const user = await prisma.users.findUnique({
+
+    return await prisma.users.findUnique({
         where: { username }
     });
-    return user;
 };
 
 
+/* -------- GET BY ID -------- */
 export const getUserById = async (id) => {
-    const user = await prisma.users.findUnique({
+
+    return await prisma.users.findUnique({
         where: { id }
     });
-    return user;
 };
 
-export const updateUserDal = async (userId, userData) => {
-    const updatedUser = await prisma.users.update({
-        where: { id: userId },
-        data: {
-            name: userData.name,
-            is_active: userData.is_active
-        }
-    });
-    return updatedUser;
-}
 
-export const updatePasswordDal = async (userId, hashedPassword) => {
-    const updatedUser = await prisma.users.update({
-        where: { id: userId },
+/* -------- UPDATE USER -------- */
+export const updateUserDal = async (id, data) => {
+
+    return await prisma.users.update({
+        where: { id },
         data: {
-            password: hashedPassword
+            name: data.name,
+            is_active: data.is_active
         }
     });
-    return updatedUser;
-}
+};

@@ -11,21 +11,40 @@ export default function LoginPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    // Simulate login process
-    setTimeout(() => {
-      console.log('Login attempt with:', { email, password });
+    try {
+      const res = await fetch('/api/v1/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email, username: email, password }), // Support both email/username field name if needed, assuming username based on service
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        localStorage.setItem('token', data.token);
+        // Redirect based on role or default path
+        window.location.href = '/pages/dashboard';
+      } else {
+        alert(data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      alert('An error occurred during login');
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
+    <div className="flex min-h-screen items-center justify-center bg-linear-to-br from-slate-900 via-slate-800 to-slate-900 px-4">
       <div className="w-full max-w-md">
         {/* Login Card */}
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-2xl p-8 space-y-8">
           {/* Logo/Brand */}
           <div className="text-center">
-            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-blue-500 to-purple-600 mb-4">
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-linear-to-br from-blue-500 to-purple-600 mb-4">
               <svg
                 className="h-8 w-8 text-white"
                 fill="none"
@@ -49,7 +68,7 @@ export default function LoginPage() {
             <div className="space-y-2">
               <label
                 htmlFor="email"
-                className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                className="block text-lg font-medium text-black dark:text-black"
               >
                 Email Address
               </label>
@@ -59,7 +78,7 @@ export default function LoginPage() {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                 placeholder="you@example.com"
               />
             </div>
@@ -69,7 +88,7 @@ export default function LoginPage() {
               <div className="flex items-center justify-between">
                 <label
                   htmlFor="password"
-                  className="block text-sm font-medium text-slate-700 dark:text-slate-300"
+                  className="block text-lg font-medium text-black dark:text-black"
                 >
                   Password
                 </label>
@@ -86,13 +105,13 @@ export default function LoginPage() {
                 required
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
+                className="w-full px-4 py-3 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-700 text-slate-900 dark:text-black placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition duration-200"
                 placeholder="••••••••"
               />
             </div>
 
             {/* Remember Me Checkbox */}
-            <div className="flex items-center">
+            {/* <div className="flex items-center">
               <input
                 id="remember"
                 type="checkbox"
@@ -104,13 +123,13 @@ export default function LoginPage() {
               >
                 Remember me for 30 days
               </label>
-            </div>
+            </div> */}
 
             {/* Submit Button */}
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
+              className="w-full py-3 mt-4 px-4 bg-linear-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white font-semibold rounded-lg shadow-lg transition duration-200 transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
               {isLoading ? (
                 <span className="flex items-center justify-center">
@@ -145,7 +164,7 @@ export default function LoginPage() {
 
 
           {/* Sign Up Link */}
-          <p className="text-center text-sm text-slate-600 dark:text-slate-400">
+          {/* <p className="text-center text-sm text-slate-600 dark:text-slate-400">
             Don't have an account?{' '}
             <a
               href="#"
@@ -153,7 +172,7 @@ export default function LoginPage() {
             >
               Sign up for free
             </a>
-          </p>
+          </p> */}
         </div>
 
         {/* Footer */}

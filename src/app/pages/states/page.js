@@ -24,10 +24,21 @@ const StatesPage = () => {
         fetchStates();
     }, []);
 
+    const getToken = () => localStorage.getItem('token');
+
     const fetchStates = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/v1/states');
+            const token = getToken();
+            const response = await fetch('/api/v1/states', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
             const result = await response.json();
             if (response.ok) {
                 setStates(result.data);
@@ -59,6 +70,7 @@ const StatesPage = () => {
 
     const saveState = async () => {
         const stateData = { code: code.toUpperCase(), name };
+        const token = getToken();
 
         try {
             const url = isEditing ? `/api/v1/states/${selectedState.id}` : '/api/v1/states';
@@ -66,9 +78,17 @@ const StatesPage = () => {
 
             const response = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(stateData)
             });
+
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
 
             const result = await response.json();
 
@@ -85,8 +105,20 @@ const StatesPage = () => {
     }
 
     const deleteState = async (id) => {
+        const token = getToken();
         try {
-            const response = await fetch(`/api/v1/states/${id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/v1/states/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
+
             const result = await response.json();
 
             if (response.ok) {
@@ -123,7 +155,7 @@ const StatesPage = () => {
             <Toast ref={toast} />
             <ConfirmDialog />
 
-            <Toolbar className="mb-4" start={<div className="text-2xl font-bold"><h1>States</h1></div>} end={<Button label='Add State' onClick={onAddState} icon="pi pi-plus" />} />
+            <Toolbar className="mb-4" start={<div className="text-2xl font-bold"><span style={{ color: "#1E8496" }}>States</span></div>} end={<Button label='Add State' onClick={onAddState} icon="pi pi-plus" />} />
 
             <Card className="p-fluid m-4">
                 <DataTable value={states} loading={loading} dataKey="id" paginator rows={10}

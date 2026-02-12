@@ -27,10 +27,21 @@ const CitiesPage = () => {
         fetchStates();
     }, []);
 
+    const getToken = () => localStorage.getItem('token');
+
     const fetchCities = async () => {
         setLoading(true);
         try {
-            const response = await fetch('/api/v1/cities');
+            const token = getToken();
+            const response = await fetch('/api/v1/cities', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
             const result = await response.json();
             if (response.ok) {
                 setCities(result.data);
@@ -46,7 +57,16 @@ const CitiesPage = () => {
 
     const fetchStates = async () => {
         try {
-            const response = await fetch('/api/v1/states');
+            const token = getToken();
+            const response = await fetch('/api/v1/states', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
             const result = await response.json();
             if (response.ok) {
                 setStates(result.data);
@@ -74,6 +94,7 @@ const CitiesPage = () => {
 
     const saveCity = async () => {
         const cityData = { name, state_id: selectedStateId };
+        const token = getToken();
 
         try {
             const url = isEditing ? `/api/v1/cities/${selectedCity.id}` : '/api/v1/cities';
@@ -81,9 +102,17 @@ const CitiesPage = () => {
 
             const response = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(cityData)
             });
+
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
 
             const result = await response.json();
 
@@ -100,8 +129,20 @@ const CitiesPage = () => {
     }
 
     const deleteCity = async (id) => {
+        const token = getToken();
         try {
-            const response = await fetch(`/api/v1/cities/${id}`, { method: 'DELETE' });
+            const response = await fetch(`/api/v1/cities/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.status === 401) {
+                window.location.href = '/';
+                return;
+            }
+
             const result = await response.json();
 
             if (response.ok) {
@@ -138,14 +179,14 @@ const CitiesPage = () => {
             <Toast ref={toast} />
             <ConfirmDialog />
 
-            <Toolbar className="mb-4" start={<div className="text-2xl font-bold"><h1>Cities</h1></div>} end={<Button label='Add City' onClick={onAddCity} icon="pi pi-plus" />} />
+            <Toolbar className="mb-4" start={<div className="text-2xl font-bold"><h1><span style={{ color: "#1E8496" }}>Cities</span></h1></div>} end={<Button label='Add City' onClick={onAddCity} icon="pi pi-plus" />} />
 
             <Card className="p-fluid m-4">
                 <DataTable value={cities} loading={loading} dataKey="id" paginator rows={10}
                     tableStyle={{ minWidth: '50rem' }}
                     emptyMessage="No cities found.">
                     <Column field="name" header="City Name" sortable style={{ width: '40%' }} />
-                    <Column field="state.name" header="State" sortable style={{ width: '40%' }} />
+                    <Column field="state.name" header="State" body={(rowData) => rowData.state?.name || 'N/A'} sortable style={{ width: '40%' }} />
                     <Column header="Actions" body={actionBodyTemplate} style={{ width: '20%' }} />
                 </DataTable>
             </Card>
