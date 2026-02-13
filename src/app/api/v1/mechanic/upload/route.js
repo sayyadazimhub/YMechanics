@@ -26,7 +26,8 @@ export async function POST(req) {
         console.log(`[Proxy Upload] User ID: ${mechanicId}, Received file: ${file.name}`);
 
         // We can optionally use file.name or generate a unique one
-        const fileName = `${Date.now()}-${file.name.replace(/\s+/g, '-')}`;
+        const folderPath = 'mechanics/documents';
+        const fileName = `${folderPath}/${file.name.replace(/\s+/g, '-')}`;
 
         const result = await uploadImageToS3(fileName, file);
 
